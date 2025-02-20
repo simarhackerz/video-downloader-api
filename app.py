@@ -1,28 +1,16 @@
-import os
 import yt_dlp
-from flask import Flask, request, jsonify
 
-app = Flask(__name__)
-
-@app.route('/download', methods=['GET'])
-def download_video():
-    url = request.args.get('url')
-    
-    if not url:
-        return jsonify({"success": False, "message": "URL is required"}), 400
-
+def download_video(url):
     ydl_opts = {
-        'cookies': 'cookies.txt',  # Yeh line add karein
+        'outtmpl': 'downloads/%(title)s.%(ext)s',
         'format': 'best',
+        'cookies': 'cookies.txt'  # Ensure cookies.txt file is in the correct directory
     }
-
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return jsonify({"success": True, "info": info})
     
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)  # False means it will only fetch info, not download
+        return info['url']
 
-if __name__ == '__main__':
-    app.run(debug=True)
+url = "https://youtu.be/uKGTGnfrTS0"
+download_link = download_video(url)
+print("Download Link:", download_link)
