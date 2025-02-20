@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
-import requests
+import yt_dlp
+import os
 
 app = Flask(__name__)
 
@@ -10,19 +11,26 @@ def home():
 @app.route('/download', methods=['GET'])
 def download_video():
     url = request.args.get('url')
-    platform = request.args.get('platform')
+    if not url:
+        return jsonify({"success": False, "message": "Invalid request, URL required"}), 400
 
-    if not url or not platform:
-        return jsonify({"success": False, "message": "Invalid request"}), 400
+    # yt-dlp options
+    ydl_opts = {
+        'format': 'best',
+        'quiet': True,
+        'outtmpl': 'downloads/%(title)s.%(ext)s'
+    }
 
-    # Example API for free video download (SaveFrom API or any other service)
-    api_url = f"https://api.savefrom.net/?url={url}"
-    response = requests.get(api_url).json()
-
-    if "url" in response:
-        return jsonify({"success": True, "downloadUrl": response["url"]})
-    else:
-        return jsonify({"success": False, "message": "Failed to fetch video"}), 500
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(url, download=False)
+            video_url = info_dict.get("url", None)
+            if video_url:
+                return jsonify({"success": True, "downloadUrl": video_url})
+            else:
+                return jsonify({"success": False, "message": "Failed to fetch video"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(host='0.0.0.0', port=10000, debug=True)
