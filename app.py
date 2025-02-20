@@ -1,36 +1,28 @@
-from flask import Flask, request, jsonify
+import os
 import yt_dlp
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Welcome to Multi-Platform Video Downloader API!"
 
 @app.route('/download', methods=['GET'])
 def download_video():
     url = request.args.get('url')
-
+    
     if not url:
-        return jsonify({"success": False, "message": "Invalid request, URL is required"}), 400
+        return jsonify({"success": False, "message": "URL is required"}), 400
 
     ydl_opts = {
-        'cookies': 'cookies.txt',  # Ensure this file is in the same directory
+        'cookies': 'cookies.txt',  # Yeh line add karein
         'format': 'best',
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            download_url = info.get("url", None)
-            
-            if download_url:
-                return jsonify({"success": True, "downloadUrl": download_url})
-            else:
-                return jsonify({"success": False, "message": "Failed to get video URL"}), 500
-
+            return jsonify({"success": True, "info": info})
+    
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(debug=True)
