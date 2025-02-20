@@ -1,4 +1,10 @@
-flask
-requests
-yt-dlp
-gunicorn
+import yt_dlp
+
+ydl_opts = {
+    'cookiefile': 'cookies.txt',  # Cookies.txt ka path
+    'outtmpl': '%(title)s.%(ext)s',  # File save format
+    'format': 'best'  # Best quality format
+}
+
+with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    ydl.download(['https://www.youtube.com/watch?v=VIDEO_ID'])
